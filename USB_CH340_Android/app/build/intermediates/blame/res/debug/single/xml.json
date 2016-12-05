@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "D:\\AndroidProjectWorkSpace\\USB_CH340_Demo2\\app\\build\\intermediates\\res\\merged\\debug\\xml\\device_filter.xml",
+        "source": "D:\\AndroidProjectWorkSpace\\USB_CH340_Demo2\\app\\src\\main\\res\\xml\\device_filter.xml"
+    },
+    {
+        "merged": "E:\\YWCdesktop\\USB_CH340_Demo2\\app\\build\\intermediates\\res\\merged\\debug\\xml\\device_filter.xml",
+        "source": "E:\\YWCdesktop\\USB_CH340_Demo2\\app\\src\\main\\res\\xml\\device_filter.xml"
+    }
+]

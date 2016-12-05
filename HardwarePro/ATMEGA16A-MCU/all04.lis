@@ -1,0 +1,560 @@
+                        .module all04.c
+                        .area text(rom, con, rel)
+ 0000                   .dbfile all04.c
+ 0000                   .dbfile E:\YWCdesktop\底层行走系统(左右避障，内部8M)\all04.c
+ 0000                   .dbfunc e put_c _put_c fV
+ 0000           ;              c -> R16
+                        .even
+ 0000           _put_c::
+ 0000                   .dbline -1
+ 0000                   .dbline 12
+ 0000           ; #include <iom16v.h> 
+ 0000           ; #include <macros.h> 
+ 0000           ; 
+ 0000           ; unsigned char Re_buf[11],counter;//用来存放串口数据的数组，都是字符型
+ 0000           ; unsigned char ucStra[6],ucStrw[6],ucStrAngle[11];
+ 0000           ; unsigned char flag;
+ 0000           ; unsigned char usart_ok;
+ 0000           ; 
+ 0000           ; void delay(int time);
+ 0000           ; //*********发送一个字符************//
+ 0000           ; void put_c(unsigned char c) 
+ 0000           ; {
+ 0000           L2:
+ 0000                   .dbline 13
+ 0000           ;       while( !(UCSRA & (1<<UDRE)) );
+ 0000           L3:
+ 0000                   .dbline 13
+ 0000 5D9B              sbis 0xb,5
+ 0002 FECF              rjmp L2
+ 0004           X0:
+ 0004                   .dbline 14
+ 0004           ;       UDR=c;
+ 0004 0CB9              out 0xc,R16
+ 0006                   .dbline -2
+ 0006           L1:
+ 0006                   .dbline 0 ; func end
+ 0006 0895              ret
+ 0008                   .dbsym r c 16 c
+ 0008                   .dbend
+ 0008                   .dbfunc e put_s _put_s fV
+ 0008           ;            ptr -> R10,R11
+                        .even
+ 0008           _put_s::
+ 0008 AA92              st -y,R10
+ 000A BA92              st -y,R11
+ 000C 5801              movw R10,R16
+ 000E                   .dbline -1
+ 000E                   .dbline 18
+ 000E           ; }
+ 000E           ; //*********发送一串字符************//
+ 000E           ; void put_s(unsigned char *ptr)
+ 000E           ; {
+ 000E 04C0              xjmp L7
+ 0010           L6:
+ 0010                   .dbline 20
+ 0010           ;       while (*ptr)
+ 0010           ;       {
+ 0010                   .dbline 21
+ 0010           ;               put_c(*ptr++);
+ 0010 F501              movw R30,R10
+ 0012 0191              ld R16,Z+
+ 0014 5F01              movw R10,R30
+ 0016 F4DF              xcall _put_c
+ 0018                   .dbline 22
+ 0018           ;       }
+ 0018           L7:
+ 0018                   .dbline 19
+ 0018 F501              movw R30,R10
+ 001A 2080              ldd R2,z+0
+ 001C 2220              tst R2
+ 001E C1F7              brne L6
+ 0020           X1:
+ 0020                   .dbline 23
+ 0020           ;       put_c(0x0D);      //换行
+ 0020 0DE0              ldi R16,13
+ 0022 EEDF              xcall _put_c
+ 0024                   .dbline -2
+ 0024           L5:
+ 0024                   .dbline 0 ; func end
+ 0024 B990              ld R11,y+
+ 0026 A990              ld R10,y+
+ 0028 0895              ret
+ 002A                   .dbsym r ptr 10 pc
+ 002A                   .dbend
+ 002A                   .dbfunc e USART_init _USART_init fV
+                        .even
+ 002A           _USART_init::
+ 002A                   .dbline -1
+ 002A                   .dbline 28
+ 002A           ;       //put_c(0x0A);  //回车
+ 002A           ; }
+ 002A           ; //*********USART 初始化************//
+ 002A           ; void USART_init(void)
+ 002A           ; {
+ 002A                   .dbline 29
+ 002A           ;       UCSRB = 0x00;   //disable while setting baud rate
+ 002A 2224              clr R2
+ 002C 2AB8              out 0xa,R2
+ 002E                   .dbline 31
+ 002E           ;     //USART 9600 8, n,1  超级终端等也要设成同样的设置才能通讯
+ 002E           ;     UCSRC = (1<<URSEL) | 0x06;
+ 002E 86E8              ldi R24,134
+ 0030 80BD              out 0x20,R24
+ 0032                   .dbline 33
+ 0032           ;     //异步，8位数据，无奇偶校验，一个停止位，无倍速  
+ 0032           ;     UBRRL= 12;//64、103、(F_CPU/BAUDRATE/8-1)%256;//=12即9600波特率
+ 0032 8CE0              ldi R24,12
+ 0034 89B9              out 0x9,R24
+ 0036                   .dbline 34
+ 0036           ;     UBRRH= 0;//3(F_CPU/BAUDRATE/8-1)/256;
+ 0036 20BC              out 0x20,R2
+ 0038                   .dbline 35
+ 0038           ;     UCSRA = 0x02;//0x00;正常异步方式
+ 0038 82E0              ldi R24,2
+ 003A 8BB9              out 0xb,R24
+ 003C                   .dbline 36
+ 003C           ;     UCSRB = 0x98;   //接收中断允许，接收缓冲自动清空，接收允许    
+ 003C 88E9              ldi R24,152
+ 003E 8AB9              out 0xa,R24
+ 0040                   .dbline -2
+ 0040           L9:
+ 0040                   .dbline 0 ; func end
+ 0040 0895              ret
+ 0042                   .dbend
+ 0042                   .dbfunc e timer_init _timer_init fV
+                        .even
+ 0042           _timer_init::
+ 0042                   .dbline -1
+ 0042                   .dbline 41
+ 0042           ; }
+ 0042           ; 
+ 0042           ; //*********PWM功能定时器的初始化************//
+ 0042           ; void timer_init(void) 
+ 0042           ; { 
+ 0042                   .dbline 44
+ 0042           ;  //SREG=0x80;         //使能全局中断
+ 0042           ; // TIMSK=(1<<OCIE1A); //使能比较匹配中断
+ 0042           ;  TCCR1A=0B10100001; //快速PWM模式，无分频，比较匹配时置零，TOP时置1
+ 0042 81EA              ldi R24,161
+ 0044 8FBD              out 0x2f,R24
+ 0046                   .dbline 45
+ 0046           ;  TCCR1B=0B00001010;
+ 0046 8AE0              ldi R24,10
+ 0048 8EBD              out 0x2e,R24
+ 004A                   .dbline -2
+ 004A           L10:
+ 004A                   .dbline 0 ; func end
+ 004A 0895              ret
+ 004C                   .dbend
+ 004C                   .dbfunc e delay _delay fV
+ 004C           ;              i -> R20,R21
+ 004C           ;           time -> R16,R17
+                        .even
+ 004C           _delay::
+ 004C 4A93              st -y,R20
+ 004E 5A93              st -y,R21
+ 0050                   .dbline -1
+ 0050                   .dbline 49
+ 0050           ; }
+ 0050           ;  //*********毫秒延时************//
+ 0050           ; void delay(int time)
+ 0050           ; {
+ 0050                   .dbline 51
+ 0050           ;  int i;
+ 0050           ;  for(;time>0;time--)
+ 0050 0AC0              xjmp L15
+ 0052           L12:
+ 0052                   .dbline 52
+ 0052           ;   for(i=0;i<1141;i++);
+ 0052 4427              clr R20
+ 0054 5527              clr R21
+ 0056           L16:
+ 0056                   .dbline 52
+ 0056           L17:
+ 0056                   .dbline 52
+ 0056 4F5F              subi R20,255  ; offset = 1
+ 0058 5F4F              sbci R21,255
+ 005A                   .dbline 52
+ 005A 4537              cpi R20,117
+ 005C E4E0              ldi R30,4
+ 005E 5E07              cpc R21,R30
+ 0060 D4F3              brlt L16
+ 0062           X2:
+ 0062           L13:
+ 0062                   .dbline 51
+ 0062 0150              subi R16,1
+ 0064 1040              sbci R17,0
+ 0066           L15:
+ 0066                   .dbline 51
+ 0066 2224              clr R2
+ 0068 3324              clr R3
+ 006A 2016              cp R2,R16
+ 006C 3106              cpc R3,R17
+ 006E 8CF3              brlt L12
+ 0070           X3:
+ 0070                   .dbline -2
+ 0070           L11:
+ 0070                   .dbline 0 ; func end
+ 0070 5991              ld R21,y+
+ 0072 4991              ld R20,y+
+ 0074 0895              ret
+ 0076                   .dbsym r i 20 I
+ 0076                   .dbsym r time 16 I
+ 0076                   .dbend
+ 0076                   .dbfunc e main _main fV
+                        .even
+ 0076           _main::
+ 0076                   .dbline -1
+ 0076                   .dbline 57
+ 0076           ; }
+ 0076           ; 
+ 0076           ; //////////////////主函数////////////////////////////
+ 0076           ; void main(void) 
+ 0076           ; {  
+ 0076                   .dbline 58
+ 0076           ;  USART_init();
+ 0076 D9DF              xcall _USART_init
+ 0078                   .dbline 61
+ 0078           ;  //timer_init();
+ 0078           ; 
+ 0078           ;  SEI(); 
+ 0078 7894              sei
+ 007A                   .dbline 62
+ 007A           ;  DDRA=0XFF;
+ 007A 8FEF              ldi R24,255
+ 007C 8ABB              out 0x1a,R24
+ 007E                   .dbline 63
+ 007E           ;  PORTA=0X00; 
+ 007E 2224              clr R2
+ 0080 2BBA              out 0x1b,R2
+ 0082                   .dbline 65
+ 0082           ;  
+ 0082           ;  delay(100);
+ 0082 04E6              ldi R16,100
+ 0084 10E0              ldi R17,0
+ 0086 E2DF              xcall _delay
+ 0088                   .dbline 66
+ 0088           ;  usart_ok=0;
+ 0088 2224              clr R2
+ 008A 20920000          sts _usart_ok,R2
+ 008E 16C0              xjmp L22
+ 0090           L21:
+ 0090                   .dbline 69
+ 0090           ;  
+ 0090           ;  while(1)
+ 0090           ;  {
+ 0090                   .dbline 70
+ 0090           ;   if(flag>0)
+ 0090 80E0              ldi R24,0
+ 0092 20900100          lds R2,_flag
+ 0096 8215              cp R24,R2
+ 0098 70F4              brsh L24
+ 009A           X4:
+ 009A                   .dbline 71
+ 009A           ;   {    
+ 009A                   .dbline 72
+ 009A           ;    put_s(ucStrAngle); 
+ 009A 00E0              ldi R16,<_ucStrAngle
+ 009C 10E0              ldi R17,>_ucStrAngle
+ 009E B4DF              xcall _put_s
+ 00A0                   .dbline 73
+ 00A0           ;    PORTA = ~PORTA;    
+ 00A0 2BB2              in R2,0x1b
+ 00A2 2094              com R2
+ 00A4 2BBA              out 0x1b,R2
+ 00A6                   .dbline 75
+ 00A6           ;    
+ 00A6           ;    flag = 0;
+ 00A6 2224              clr R2
+ 00A8 20920100          sts _flag,R2
+ 00AC                   .dbline 76
+ 00AC           ;    usart_ok = 0;
+ 00AC 20920000          sts _usart_ok,R2
+ 00B0                   .dbline 77
+ 00B0           ;    counter = 0;
+ 00B0 20921900          sts _counter,R2
+ 00B4                   .dbline 78
+ 00B4           ;    SEI();   
+ 00B4 7894              sei
+ 00B6                   .dbline 79
+ 00B6           ;   } 
+ 00B6           L24:
+ 00B6                   .dbline 80
+ 00B6           ;   delay(10); 
+ 00B6 0AE0              ldi R16,10
+ 00B8 10E0              ldi R17,0
+ 00BA C8DF              xcall _delay
+ 00BC                   .dbline 82
+ 00BC           ;   //put_s("fuck it");  
+ 00BC           ;  }
+ 00BC           L22:
+ 00BC                   .dbline 68
+ 00BC E9CF              xjmp L21
+ 00BE           X5:
+ 00BE                   .dbline -2
+ 00BE           L20:
+ 00BE                   .dbline 0 ; func end
+ 00BE 0895              ret
+ 00C0                   .dbend
+                        .area vector(rom, abs)
+                        .org 44
+ 002C 0C946000          jmp _uart0_rx_isr
+                        .area text(rom, con, rel)
+ 00C0                   .dbfile E:\YWCdesktop\底层行走系统(左右避障，内部8M)\all04.c
+ 00C0                   .dbfunc e uart0_rx_isr _uart0_rx_isr fV
+                        .even
+ 00C0           _uart0_rx_isr::
+ 00C0 2A92              st -y,R2
+ 00C2 0A93              st -y,R16
+ 00C4 1A93              st -y,R17
+ 00C6 8A93              st -y,R24
+ 00C8 9A93              st -y,R25
+ 00CA AA93              st -y,R26
+ 00CC EA93              st -y,R30
+ 00CE FA93              st -y,R31
+ 00D0 2FB6              IN R2,63
+ 00D2 2A92              st -y,R2
+ 00D4                   .dbline -1
+ 00D4                   .dbline 87
+ 00D4           ; }
+ 00D4           ; /////////////////////中断接收数据//////////////
+ 00D4           ; #pragma interrupt_handler uart0_rx_isr:12
+ 00D4           ; void uart0_rx_isr(void)
+ 00D4           ; {      
+ 00D4                   .dbline 89
+ 00D4           ;        
+ 00D4           ;       Re_buf[counter]=UDR;            
+ 00D4 80E0              ldi R24,<_Re_buf
+ 00D6 90E0              ldi R25,>_Re_buf
+ 00D8 E0911900          lds R30,_counter
+ 00DC FF27              clr R31
+ 00DE E80F              add R30,R24
+ 00E0 F91F              adc R31,R25
+ 00E2 2CB0              in R2,0xc
+ 00E4 2082              std z+0,R2
+ 00E6                   .dbline 90
+ 00E6           ;       if(counter==0&&Re_buf[0]!=0x55) return;      //第0号数据不是帧头                     
+ 00E6 20901900          lds R2,_counter
+ 00EA 2220              tst R2
+ 00EC 29F4              brne L27
+ 00EE           X6:
+ 00EE 80911A00          lds R24,_Re_buf
+ 00F2 8535              cpi R24,85
+ 00F4 09F0              breq L27
+ 00F6           X7:
+ 00F6                   .dbline 90
+ 00F6 7FC0              xjmp L26
+ 00F8           L27:
+ 00F8                   .dbline 92
+ 00F8           ;       
+ 00F8           ;       if(usart_ok == 0)
+ 00F8 20900000          lds R2,_usart_ok
+ 00FC 2220              tst R2
+ 00FE 09F0              breq X13
+ 0100 7AC0              xjmp L29
+ 0102           X13:
+ 0102           X8:
+ 0102                   .dbline 93
+ 0102           ;       {
+ 0102                   .dbline 94
+ 0102           ;               counter++; 
+ 0102 80911900          lds R24,_counter
+ 0106 8F5F              subi R24,255    ; addi 1
+ 0108 80931900          sts _counter,R24
+ 010C                   .dbline 95
+ 010C           ;           if(counter==11)             //接收到11个数据
+ 010C 8B30              cpi R24,11
+ 010E 09F0              breq X14
+ 0110 72C0              xjmp L31
+ 0112           X14:
+ 0112           X9:
+ 0112                   .dbline 96
+ 0112           ;           {    
+ 0112                   .dbline 97
+ 0112           ;              counter=0;               //重新赋值，准备下一帧数据的接收                    
+ 0112 2224              clr R2
+ 0114 20921900          sts _counter,R2
+ 0118                   .dbline 98
+ 0118           ;                       switch(Re_buf [1])
+ 0118 00911B00          lds R16,_Re_buf+1
+ 011C 1127              clr R17
+ 011E 0135              cpi R16,81
+ 0120 E0E0              ldi R30,0
+ 0122 1E07              cpc R17,R30
+ 0124 49F0              breq L37
+ 0126           X10:
+ 0126 0235              cpi R16,82
+ 0128 E0E0              ldi R30,0
+ 012A 1E07              cpc R17,R30
+ 012C F1F0              breq L49
+ 012E           X11:
+ 012E 0335              cpi R16,83
+ 0130 E0E0              ldi R30,0
+ 0132 1E07              cpc R17,R30
+ 0134 99F1              breq L61
+ 0136           X12:
+ 0136 5FC0              xjmp L33
+ 0138           L37:
+ 0138                   .dbline 101
+ 0138           ;                       {
+ 0138           ;                       case 0x51:
+ 0138           ;                       ucStra[0]=Re_buf[2];
+ 0138 20901C00          lds R2,_Re_buf+2
+ 013C 20921300          sts _ucStra,R2
+ 0140                   .dbline 102
+ 0140           ;                       ucStra[1]=Re_buf[3];
+ 0140 20901D00          lds R2,_Re_buf+3
+ 0144 20921400          sts _ucStra+1,R2
+ 0148                   .dbline 103
+ 0148           ;                       ucStra[2]=Re_buf[4];
+ 0148 20901E00          lds R2,_Re_buf+4
+ 014C 20921500          sts _ucStra+2,R2
+ 0150                   .dbline 104
+ 0150           ;                       ucStra[3]=Re_buf[5];
+ 0150 20901F00          lds R2,_Re_buf+5
+ 0154 20921600          sts _ucStra+3,R2
+ 0158                   .dbline 105
+ 0158           ;                       ucStra[4]=Re_buf[6];
+ 0158 20902000          lds R2,_Re_buf+6
+ 015C 20921700          sts _ucStra+4,R2
+ 0160                   .dbline 106
+ 0160           ;                       ucStra[5]=Re_buf[7];
+ 0160 20902100          lds R2,_Re_buf+7
+ 0164 20921800          sts _ucStra+5,R2
+ 0168                   .dbline 107
+ 0168           ;                       break;
+ 0168 46C0              xjmp L34
+ 016A           L49:
+ 016A                   .dbline 109
+ 016A           ;                       case 0x52:       
+ 016A           ;                       ucStrw[0]=Re_buf[2];
+ 016A 20901C00          lds R2,_Re_buf+2
+ 016E 20920D00          sts _ucStrw,R2
+ 0172                   .dbline 110
+ 0172           ;                       ucStrw[1]=Re_buf[3];
+ 0172 20901D00          lds R2,_Re_buf+3
+ 0176 20920E00          sts _ucStrw+1,R2
+ 017A                   .dbline 111
+ 017A           ;                       ucStrw[2]=Re_buf[4];
+ 017A 20901E00          lds R2,_Re_buf+4
+ 017E 20920F00          sts _ucStrw+2,R2
+ 0182                   .dbline 112
+ 0182           ;                       ucStrw[3]=Re_buf[5];
+ 0182 20901F00          lds R2,_Re_buf+5
+ 0186 20921000          sts _ucStrw+3,R2
+ 018A                   .dbline 113
+ 018A           ;                       ucStrw[4]=Re_buf[6];
+ 018A 20902000          lds R2,_Re_buf+6
+ 018E 20921100          sts _ucStrw+4,R2
+ 0192                   .dbline 114
+ 0192           ;                       ucStrw[5]=Re_buf[7];
+ 0192 20902100          lds R2,_Re_buf+7
+ 0196 20921200          sts _ucStrw+5,R2
+ 019A                   .dbline 115
+ 019A           ;                       break;
+ 019A 2DC0              xjmp L34
+ 019C           L61:
+ 019C                   .dbline 117
+ 019C           ;                       case 0x53: 
+ 019C           ;                       ucStrAngle[0]=Re_buf[0];
+ 019C 20901A00          lds R2,_Re_buf
+ 01A0 20920200          sts _ucStrAngle,R2
+ 01A4                   .dbline 118
+ 01A4           ;                       ucStrAngle[1]=Re_buf[1];
+ 01A4 20901B00          lds R2,_Re_buf+1
+ 01A8 20920300          sts _ucStrAngle+1,R2
+ 01AC                   .dbline 119
+ 01AC           ;                       ucStrAngle[2]=Re_buf[2];
+ 01AC 20901C00          lds R2,_Re_buf+2
+ 01B0 20920400          sts _ucStrAngle+2,R2
+ 01B4                   .dbline 120
+ 01B4           ;                       ucStrAngle[3]=Re_buf[3];
+ 01B4 20901D00          lds R2,_Re_buf+3
+ 01B8 20920500          sts _ucStrAngle+3,R2
+ 01BC                   .dbline 121
+ 01BC           ;                       ucStrAngle[4]=Re_buf[4];
+ 01BC 20901E00          lds R2,_Re_buf+4
+ 01C0 20920600          sts _ucStrAngle+4,R2
+ 01C4                   .dbline 122
+ 01C4           ;                       ucStrAngle[5]=Re_buf[5];
+ 01C4 20901F00          lds R2,_Re_buf+5
+ 01C8 20920700          sts _ucStrAngle+5,R2
+ 01CC                   .dbline 123
+ 01CC           ;                       ucStrAngle[6]=Re_buf[6];
+ 01CC 20902000          lds R2,_Re_buf+6
+ 01D0 20920800          sts _ucStrAngle+6,R2
+ 01D4                   .dbline 124
+ 01D4           ;                       ucStrAngle[7]=Re_buf[7];
+ 01D4 20902100          lds R2,_Re_buf+7
+ 01D8 20920900          sts _ucStrAngle+7,R2
+ 01DC                   .dbline 125
+ 01DC           ;                       ucStrAngle[8]=0X54;
+ 01DC 84E5              ldi R24,84
+ 01DE 80930A00          sts _ucStrAngle+8,R24
+ 01E2                   .dbline 126
+ 01E2           ;                       ucStrAngle[9]=0X54;
+ 01E2 80930B00          sts _ucStrAngle+9,R24
+ 01E6                   .dbline 127
+ 01E6           ;                       ucStrAngle[10]=0X54;
+ 01E6 80930C00          sts _ucStrAngle+10,R24
+ 01EA                   .dbline 128
+ 01EA           ;                       flag = 1;
+ 01EA 81E0              ldi R24,1
+ 01EC 80930100          sts _flag,R24
+ 01F0                   .dbline 129
+ 01F0           ;                       usart_ok = 1;
+ 01F0 80930000          sts _usart_ok,R24
+ 01F4                   .dbline 130
+ 01F4           ;                       CLI();
+ 01F4 F894              cli
+ 01F6                   .dbline 131
+ 01F6           ;                       break;
+ 01F6           L33:
+ 01F6           L34:
+ 01F6                   .dbline 133
+ 01F6           ;                       } 
+ 01F6           ;           }
+ 01F6           L31:
+ 01F6                   .dbline 134
+ 01F6           ;        }
+ 01F6           L29:
+ 01F6                   .dbline -2
+ 01F6           L26:
+ 01F6                   .dbline 0 ; func end
+ 01F6 2990              ld R2,y+
+ 01F8 2FBE              OUT 63,R2
+ 01FA F991              ld R31,y+
+ 01FC E991              ld R30,y+
+ 01FE A991              ld R26,y+
+ 0200 9991              ld R25,y+
+ 0202 8991              ld R24,y+
+ 0204 1991              ld R17,y+
+ 0206 0991              ld R16,y+
+ 0208 2990              ld R2,y+
+ 020A 1895              reti
+ 020C                   .dbend
+                        .area bss(ram, con, rel)
+ 0000                   .dbfile E:\YWCdesktop\底层行走系统(左右避障，内部8M)\all04.c
+ 0000           _usart_ok::
+ 0000                   .blkb 1
+ 0001                   .dbsym e usart_ok _usart_ok c
+ 0001           _flag::
+ 0001                   .blkb 1
+ 0002                   .dbsym e flag _flag c
+ 0002           _ucStrAngle::
+ 0002                   .blkb 11
+ 000D                   .dbsym e ucStrAngle _ucStrAngle A[11:11]c
+ 000D           _ucStrw::
+ 000D                   .blkb 6
+ 0013                   .dbsym e ucStrw _ucStrw A[6:6]c
+ 0013           _ucStra::
+ 0013                   .blkb 6
+ 0019                   .dbsym e ucStra _ucStra A[6:6]c
+ 0019           _counter::
+ 0019                   .blkb 1
+ 001A                   .dbsym e counter _counter c
+ 001A           _Re_buf::
+ 001A                   .blkb 11
+ 0025                   .dbsym e Re_buf _Re_buf A[11:11]c
+ 0025           ; }

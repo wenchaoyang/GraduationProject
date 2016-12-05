@@ -1,0 +1,18 @@
+[
+    {
+        "merged": "G:\\GraduationProjects\\VirtualExperimentGloveHands\\USB_CH340_Android\\app\\build\\intermediates\\res\\merged\\androidTest\\debug\\layout\\window.xml",
+        "source": "G:\\GraduationProjects\\VirtualExperimentGloveHands\\USB_CH340_Android\\app\\build\\intermediates\\bundles\\debug\\res\\layout\\window.xml"
+    },
+    {
+        "merged": "D:\\AndroidProjectWorkSpace\\USB_CH340_Demo2\\app\\build\\intermediates\\res\\merged\\androidTest\\debug\\layout\\activity_main.xml",
+        "source": "D:\\AndroidProjectWorkSpace\\USB_CH340_Demo2\\app\\build\\intermediates\\bundles\\debug\\res\\layout\\activity_main.xml"
+    },
+    {
+        "merged": "G:\\GraduationProjects\\VirtualExperimentGloveHands\\USB_CH340_Android\\app\\build\\intermediates\\res\\merged\\androidTest\\debug\\layout\\activity_main.xml",
+        "source": "G:\\GraduationProjects\\VirtualExperimentGloveHands\\USB_CH340_Android\\app\\build\\intermediates\\bundles\\debug\\res\\layout\\activity_main.xml"
+    },
+    {
+        "merged": "G:\\GraduationProjects\\VirtualExperimentGloveHands\\USB_CH340_Android\\app\\build\\intermediates\\res\\merged\\androidTest\\debug\\layout\\surface_view_window.xml",
+        "source": "G:\\GraduationProjects\\VirtualExperimentGloveHands\\USB_CH340_Android\\app\\build\\intermediates\\bundles\\debug\\res\\layout\\surface_view_window.xml"
+    }
+]

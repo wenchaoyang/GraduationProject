@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        jar="E:\YWCdesktop\USB_CH340_Demo2\app\build\intermediates\incremental-runtime-classes\debug\instant-run.jar"
+        jumboMode="true"
+        revision="22.0.1"
+        sha1="27cc3877c3b909ab0dee3b452fc980056534f830">
+        <dex dex="E:\YWCdesktop\USB_CH340_Demo2\app\build\intermediates\transforms\dex\debug\folders\1000\10\instant-run_3a3a09848a1650b012758c4ae8f7863e33bd517f\classes.dex" />
+    </item>
+    <item
+        jar="D:\Android\Sdk\extras\android\m2repository\com\android\support\support-v4\19.1.0\support-v4-19.1.0.jar"
+        jumboMode="true"
+        revision="22.0.1"
+        sha1="85f201b380937e61a9dce6ca90ccf6872abbfb67">
+        <dex dex="E:\YWCdesktop\USB_CH340_Demo2\app\build\intermediates\transforms\dex\debug\folders\1000\10\support-v4-19.1.0_6b3c518bc9c8bcc2951748b7b651357ab447fc9a\classes.dex" />
+    </item>
+    <item
+        jar="E:\YWCdesktop\USB_CH340_Demo2\app\libs\CH34xDriver.jar"
+        jumboMode="true"
+        revision="22.0.1"
+        sha1="62daf61b6a7ef282bd11f802da23eb73830e58b9">
+        <dex dex="E:\YWCdesktop\USB_CH340_Demo2\app\build\intermediates\transforms\dex\debug\folders\1000\2\CH34xDriver_c865d5c916cfe6381a81192ec7ca7d7b70c6e5b1\classes.dex" />
+    </item>
+    <item
+        jar="E:\YWCdesktop\USB_CH340_Demo2\app\build\intermediates\incremental-classes\debug\instant-run-bootstrap.jar"
+        jumboMode="true"
+        revision="22.0.1"
+        sha1="6245d1a9791563936aeb9ba9335ebe9b12b36c40">
+        <dex dex="E:\YWCdesktop\USB_CH340_Demo2\app\build\intermediates\transforms\dex\debug\folders\1000\10\instant-run-bootstrap_430d2f3b8f8c6644a43a23b69a5017b72576ea20\classes.dex" />
+    </item>
+
+</items>

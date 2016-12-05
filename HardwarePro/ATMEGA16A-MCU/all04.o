@@ -1,0 +1,238 @@
+XL
+H 3 areas E global symbols
+M all04.c
+A text size 20C flags 0
+dbfile all04.c
+dbfile E:\YWCdesktop\底层行走系统(左右避障，内部8M)\all04.c
+dbfunc e put_c 0 fV
+dbsym r c 10 c
+dbline FFFFFFFF 0
+dbline C 0
+dbline D 0
+dbline D 0
+dbline E 4
+dbline FFFFFFFE 6
+dbline 0 6
+dbfunc e put_s 8 fV
+dbsym r ptr A pc
+dbline FFFFFFFF E
+dbline 12 E
+dbline 14 10
+dbline 15 10
+dbline 16 18
+dbline 13 18
+dbline 17 20
+dbline FFFFFFFE 24
+dbline 0 24
+dbfunc e USART_init 2A fV
+dbline FFFFFFFF 2A
+dbline 1C 2A
+dbline 1D 2A
+dbline 1F 2E
+dbline 21 32
+dbline 22 36
+dbline 23 38
+dbline 24 3C
+dbline FFFFFFFE 40
+dbline 0 40
+dbfunc e timer_init 42 fV
+dbline FFFFFFFF 42
+dbline 29 42
+dbline 2C 42
+dbline 2D 46
+dbline FFFFFFFE 4A
+dbline 0 4A
+dbfunc e delay 4C fV
+dbsym r i 14 I
+dbsym r time 10 I
+dbline FFFFFFFF 50
+dbline 31 50
+dbline 33 50
+dbline 34 52
+dbline 34 56
+dbline 34 56
+dbline 34 5A
+dbline 33 62
+dbline 33 66
+dbline FFFFFFFE 70
+dbline 0 70
+dbfunc e main 76 fV
+dbline FFFFFFFF 76
+dbline 39 76
+dbline 3A 76
+dbline 3D 78
+dbline 3E 7A
+dbline 3F 7E
+dbline 41 82
+dbline 42 88
+dbline 45 90
+dbline 46 90
+dbline 47 9A
+dbline 48 9A
+dbline 49 A0
+dbline 4B A6
+dbline 4C AC
+dbline 4D B0
+dbline 4E B4
+dbline 4F B6
+dbline 50 B6
+dbline 52 BC
+dbline 44 BC
+dbline FFFFFFFE BE
+dbline 0 BE
+dbfunc e uart0_rx_isr C0 fV
+dbline FFFFFFFF D4
+dbline 57 D4
+dbline 59 D4
+dbline 5A E6
+dbline 5A F6
+dbline 5C F8
+dbline 5D 102
+dbline 5E 102
+dbline 5F 10C
+dbline 60 112
+dbline 61 112
+dbline 62 118
+dbline 65 138
+dbline 66 140
+dbline 67 148
+dbline 68 150
+dbline 69 158
+dbline 6A 160
+dbline 6B 168
+dbline 6D 16A
+dbline 6E 172
+dbline 6F 17A
+dbline 70 182
+dbline 71 18A
+dbline 72 192
+dbline 73 19A
+dbline 75 19C
+dbline 76 1A4
+dbline 77 1AC
+dbline 78 1B4
+dbline 79 1BC
+dbline 7A 1C4
+dbline 7B 1CC
+dbline 7C 1D4
+dbline 7D 1DC
+dbline 7E 1E2
+dbline 7F 1E6
+dbline 80 1EA
+dbline 81 1F0
+dbline 82 1F4
+dbline 83 1F6
+dbline 85 1F6
+dbline 86 1F6
+dbline FFFFFFFE 1F6
+dbline 0 1F6
+S _USART_init Def002A
+S _main Def0076
+S _uart0_rx_isr Def00C0
+S _delay Def004C
+S _put_c Def0000
+S _put_s Def0008
+S _timer_init Def0042
+A vector size 30 flags C
+A bss size 25 flags 20
+dbfile E:\YWCdesktop\底层行走系统(左右避障，内部8M)\all04.c
+dbsym e usart_ok 0 c
+dbsym e flag 1 c
+dbsym e ucStrAngle 2 A[11:11]c
+dbsym e ucStrw D A[6:6]c
+dbsym e ucStra 13 A[6:6]c
+dbsym e counter 19 c
+dbsym e Re_buf 1A A[11:11]c
+S _ucStrAngle Def0002
+S _counter Def0019
+S _Re_buf Def001A
+S _usart_ok Def0000
+S _ucStra Def0013
+S _ucStrw Def000D
+S _flag Def0001
+T 00 00 5D 9B FE CF 0C B9 08 95
+R 00 00 00 00
+T 08 00 AA 92 BA 92 58 01 04 C0 F5 01 01 91 5F 01
+R 00 00 00 00
+T 16 00 F4 DF F5 01 20 80 22 20 C1 F7 0D E0 EE DF
+R 00 00 00 00
+T 24 00 B9 90 A9 90 08 95
+R 00 00 00 00
+T 2A 00 22 24 2A B8 86 E8 80 BD 8C E0 89 B9 20 BC
+R 00 00 00 00
+T 38 00 82 E0 8B B9 88 E9 8A B9 08 95
+R 00 00 00 00
+T 42 00 81 EA 8F BD 8A E0 8E BD 08 95
+R 00 00 00 00
+T 4C 00 4A 93 5A 93 0A C0 44 27 55 27 4F 5F 5F 4F
+R 00 00 00 00
+T 5A 00 45 37 E4 E0 5E 07 D4 F3 01 50 10 40 22 24
+R 00 00 00 00
+T 68 00 33 24 20 16 31 06 8C F3 59 91 49 91 08 95
+R 00 00 00 00
+T 76 00 D9 DF 78 94 8F EF 8A BB 22 24 2B BA 04 E6
+R 00 00 00 00
+T 84 00 10 E0 E2 DF 22 24 20 92 00 00 16 C0 80 E0
+R 00 00 00 00 00 0A 02 00
+T 92 00 20 90 01 00 82 15 70 F4 00 E0
+R 00 00 00 00 00 04 02 00 20 0A 02 00 02 00
+T 9C 00 10 E0 B4 DF 2B B2 20 94 2B BA 22 24 20 92
+R 00 00 00 00 40 02 02 00 02 00
+T AA 00 01 00 20 92 00 00 20 92 19 00 78 94 0A E0
+R 00 00 00 00 00 02 02 00 00 06 02 00 00 0A 02 00
+T B8 00 10 E0 C8 DF E9 CF 08 95
+R 00 00 00 00
+T 2C 00 0C 94 60 00
+R 00 00 01 00 10 04 00 00
+T C0 00 2A 92 0A 93 1A 93 8A 93 9A 93 AA 93 EA 93
+R 00 00 00 00
+T CE 00 FA 93 2F B6 2A 92 80 E0 90 E0 E0 91
+R 00 00 00 00 20 08 02 00 1A 00 40 0A 02 00 1A 00
+T DA 00 19 00 FF 27 E8 0F F9 1F 2C B0 20 82 20 90
+R 00 00 00 00 00 02 02 00
+T E8 00 19 00 22 20 29 F4 80 91 1A 00 85 35 09 F0
+R 00 00 00 00 00 02 02 00 00 0A 02 00
+T F6 00 7F C0 20 90 00 00 22 20 09 F0 7A C0 80 91
+R 00 00 00 00 00 06 02 00
+T 04 01 19 00 8F 5F 80 93 19 00 8B 30 09 F0 72 C0
+R 00 00 00 00 00 02 02 00 00 08 02 00
+T 12 01 22 24 20 92 19 00 00 91 1B 00 11 27 01 35
+R 00 00 00 00 00 06 02 00 00 0A 02 00
+T 20 01 E0 E0 1E 07 49 F0 02 35 E0 E0 1E 07 F1 F0
+R 00 00 00 00
+T 2E 01 03 35 E0 E0 1E 07 99 F1 5F C0 20 90 1C 00
+R 00 00 00 00 00 0E 02 00
+T 3C 01 20 92 13 00 20 90 1D 00 20 92 14 00 20 90
+R 00 00 00 00 00 04 02 00 00 08 02 00 00 0C 02 00
+T 4A 01 1E 00 20 92 15 00 20 90 1F 00 20 92
+R 00 00 00 00 00 02 02 00 00 06 02 00 00 0A 02 00
+T 56 01 16 00 20 90 20 00 20 92 17 00 20 90
+R 00 00 00 00 00 02 02 00 00 06 02 00 00 0A 02 00
+T 62 01 21 00 20 92 18 00 46 C0 20 90 1C 00 20 92
+R 00 00 00 00 00 02 02 00 00 06 02 00 00 0C 02 00
+T 70 01 0D 00 20 90 1D 00 20 92 0E 00 20 90
+R 00 00 00 00 00 02 02 00 00 06 02 00 00 0A 02 00
+T 7C 01 1E 00 20 92 0F 00 20 90 1F 00 20 92
+R 00 00 00 00 00 02 02 00 00 06 02 00 00 0A 02 00
+T 88 01 10 00 20 90 20 00 20 92 11 00 20 90
+R 00 00 00 00 00 02 02 00 00 06 02 00 00 0A 02 00
+T 94 01 21 00 20 92 12 00 2D C0 20 90 1A 00 20 92
+R 00 00 00 00 00 02 02 00 00 06 02 00 00 0C 02 00
+T A2 01 02 00 20 90 1B 00 20 92 03 00 20 90
+R 00 00 00 00 00 02 02 00 00 06 02 00 00 0A 02 00
+T AE 01 1C 00 20 92 04 00 20 90 1D 00 20 92
+R 00 00 00 00 00 02 02 00 00 06 02 00 00 0A 02 00
+T BA 01 05 00 20 90 1E 00 20 92 06 00 20 90
+R 00 00 00 00 00 02 02 00 00 06 02 00 00 0A 02 00
+T C6 01 1F 00 20 92 07 00 20 90 20 00 20 92
+R 00 00 00 00 00 02 02 00 00 06 02 00 00 0A 02 00
+T D2 01 08 00 20 90 21 00 20 92 09 00 84 E5 80 93
+R 00 00 00 00 00 02 02 00 00 06 02 00 00 0A 02 00
+T E0 01 0A 00 80 93 0B 00 80 93 0C 00 81 E0 80 93
+R 00 00 00 00 00 02 02 00 00 06 02 00 00 0A 02 00
+T EE 01 01 00 80 93 00 00 F8 94 29 90 2F BE F9 91
+R 00 00 00 00 00 02 02 00 00 06 02 00
+T FC 01 E9 91 A9 91 99 91 89 91 19 91 09 91 29 90
+R 00 00 00 00
+T 0A 02 18 95
+R 00 00 00 00

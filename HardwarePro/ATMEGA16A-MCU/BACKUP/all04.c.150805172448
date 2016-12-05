@@ -1,0 +1,267 @@
+#include <iom16v.h> 
+#include <macros.h> 
+
+#define OC0_OUT_EN DDRB |= 0b00001000
+#define OC2_OUT_EN DDRD |= 0b10000000
+#define OC0_ON TCCR0 = 0B01101010 
+#define OC2_ON TCCR2 = 0B01101010
+#define OC0_OFF TCCR0 = 0B00000000
+#define OC2_OFF TCCR2 = 0B00000000
+#define OC1A_OFF DDRD &= 0B11011111
+#define OC1B_OFF DDRD &= 0B11101111
+#define OC1A_ON DDRD |= 0B00100000
+#define OC1B_ON DDRD |= 0B00010000
+
+unsigned char str[10];//用来存放串口数据的数组，都是字符型
+unsigned char old_dir,oldv,olda,getp,usart_ok;
+void softrealize(unsigned char dir,unsigned char v);
+void Implement(unsigned char k);
+void delay(int time);
+//*********发送一个字符************//
+void put_c(unsigned char c) 
+{
+	while( !(UCSRA & (1<<UDRE)) );
+	UDR=c;
+}
+//*********发送一串字符************//
+void put_s(unsigned char *ptr)
+{
+	while (*ptr)
+	{
+		put_c(*ptr++);
+	}
+	put_c(0x0D);	  //换行
+	//put_c(0x0A);  //回车
+}
+//*********USART 初始化************//
+void USART_init(void)
+{
+ 	UCSRB = 0x00;   //disable while setting baud rate
+    //USART 9600 8, n,1  超级终端等也要设成同样的设置才能通讯
+    UCSRC = (1<<URSEL) | 0x06;
+    //异步，8位数据，无奇偶校验，一个停止位，无倍速  
+    UBRRL= 103;//64、103、(F_CPU/BAUDRATE/8-1)%256;//=12即9600波特率
+    UBRRH= 0;//3(F_CPU/BAUDRATE/8-1)/256;
+    UCSRA = 0x02;//0x00;正常异步方式
+    UCSRB = 0x98;   //接收中断允许，接收缓冲自动清空，接收允许
+    
+}
+
+//*********PWM功能定时器的初始化************//
+void timer_init(void) 
+{ 
+ 
+ OC0_OUT_EN;
+ OC2_OUT_EN;
+ OC0_OFF;
+ OC2_OFF;
+ OC1A_OFF;
+ OC1B_OFF;
+ //SREG=0x80;         //使能全局中断
+// TIMSK=(1<<OCIE1A); //使能比较匹配中断
+ TCCR1A=0B10100001; //快速PWM模式，无分频，比较匹配时置零，TOP时置1
+ TCCR1B=0B00001010;
+}
+ //*********毫秒延时************//
+void delay(int time)
+{
+ int i;
+ for(;time>0;time--)
+  for(i=0;i<1141;i++);
+}
+//**对接收到的字符（放str[]数组）甄别转化为百分比**//
+//**str[]收到的字符以a、b、l、r开头，#结束，中间存放速度百分比**//
+unsigned char Judge_s(void)
+{
+  unsigned char j,m;
+  j=0;
+  if(str[3]=='#')
+  {
+    if(str[1]>='0'&&str[1]<='9'&&str[2]>='0'&&str[2]<='9')
+	{
+	  j=(str[1]-48)*10+str[2]-48;
+	  //put_c(j);
+	}
+	else  
+	{	 
+	 str[0]='s';
+	}
+  }
+  else  
+  {
+   //put_s("error end");
+   str[0]='s';
+  }
+  m=100-j;
+  return(m);
+}
+//*********根据接收到的信息执行具体输出************//
+
+//go ahead
+void forward(unsigned char speed)
+{
+ OC0_OFF;
+ OC2_OFF;
+ OC1A_OFF;  
+ OC1B_OFF;
+ PORTB |=0X08;
+ PORTD |=0X80; 
+ delay(40);
+ OC0_ON;
+ OC2_ON;
+ OCR0=speed; 
+ OCR2=speed; 
+ delay(20); 
+}
+//go left
+void left(unsigned char speed)
+{
+ OC0_OFF;
+ OC2_OFF;
+ OC1A_OFF;  
+ OC1B_OFF;
+ PORTB |=0X08;
+ PORTD |=0X80; 
+ delay(40);
+ OC2_ON;
+ OC1B_ON;
+ OCR1B=speed; 
+ OCR2=speed; 
+ delay(20); 
+}
+//go right
+void right(unsigned char speed)
+{
+ OC0_OFF;
+ OC2_OFF;
+ OC1A_OFF;  
+ OC1B_OFF;
+ PORTB |=0X08;
+ PORTD |=0X80; 
+ delay(40);
+ OC1A_ON;    //右转right
+ OC0_ON;
+ OCR1A=speed; 
+ OCR0=speed; 
+ delay(20);
+}
+//go back
+void back(unsigned char speed)
+{
+ OC0_OFF;
+ OC2_OFF;
+ OC1A_OFF;  
+ OC1B_OFF;
+ PORTB |=0X08;
+ PORTD |=0X80; 
+ delay(40);
+ OC1A_ON;   //后退back
+ OC1B_ON;
+ OC0_OFF;
+ OC2_OFF;
+ PORTB |=0X08;
+ PORTD |=0X80;
+ OCR1A=speed; 
+ OCR1B=speed; 
+ delay(20);
+}
+//stop
+void stop()
+{
+ OC0_OFF;
+ OC2_OFF;
+ OC1A_OFF;  
+ OC1B_OFF;
+ PORTB |=0X08;
+ PORTD |=0X80; 
+ delay(20);
+}
+//////////////////主函数////////////////////////////
+void main(void) 
+{
+ unsigned char percent;
+ int cin;
+ unsigned char msg[3];
+
+ getp = 0;
+ USART_init();
+ timer_init();
+
+ SEI(); 
+ DDRA=0XFF;
+ PORTA=0X00;
+ DDRC=0X00;
+ 
+ //初始状态准确关闭所有PWM
+ OC1A_ON;
+ OC1B_ON;
+ PORTD &=0X11001111;
+ delay(100);
+ OC1A_OFF;
+ OC1B_OFF;
+ OC0_OFF;
+ OC2_OFF;
+ PORTB |=0X08;
+ PORTD |=0X80;
+ delay(100);
+ usart_ok=0;
+ 
+ while(1)
+ {
+  if(usart_ok>0)
+  {
+   usart_ok--;
+   percent=Judge_s();//命令甄别
+   msg[0] = percent / 10 + 48;
+   msg[1] = percent % 10 + 48;
+   msg[2] = '\0';
+   put_s(msg);//return the speed
+   //Implement(percent);//输出驱动执行
+   if(str[0] == 'a') forward(percent);
+   else if(str[0] == 'b') back(percent);
+   else if(str[0] == 'l') left(percent);
+   else if(str[0] == 'r') right(percent);
+   else stop();
+   
+   delay(50);
+  }
+  cin = PINC;
+  if(cin & 0X01)
+  {
+   PORTA = 0X00;
+  
+  }
+  else
+  { 
+  	PORTA = 0XFF; 	
+	put_s("no");
+  }
+  delay(10);
+ }
+}
+/////////////////////中断接收数据//////////////
+#pragma interrupt_handler uart0_rx_isr:12
+void uart0_rx_isr(void)
+{
+ 	 if(usart_ok <= 0)
+	 {
+ 	 str[getp]=UDR;
+	 if(str[getp]=='#')
+	 {
+	  getp=0;
+	  usart_ok=3;
+	  PORTA=~PINA;
+	  put_s(str);
+	 }
+	 else if(getp>4)
+	 {
+	  getp = 0;
+	  usart_ok = 0;
+	 }
+	 else
+	 { 
+	   getp++;
+	 }
+	 }
+	 
+}

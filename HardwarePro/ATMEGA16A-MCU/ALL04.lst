@@ -1,0 +1,392 @@
+Interrupt Vectors
+    00000 940C 002A JMP	__text_start|__start
+    00016 940C 00AD JMP	_uart0_rx_isr
+
+Program Code (text area)
+__text_start|__start:
+    0002A E5CF      LDI	R28,0x5F
+    0002B E0D4      LDI	R29,4
+    0002C BFCD      OUT	0x3D,R28
+    0002D BFDE      OUT	0x3E,R29
+    0002E 51CE      SUBI	R28,0x1E
+    0002F 40D0      SBCI	R29,0
+    00030 EA0A      LDI	R16,0xAA
+    00031 8308      ST	Y,R16
+    00032 2400      CLR	R0
+    00033 E6E0      LDI	R30,0x60
+    00034 E0F0      LDI	R31,0
+    00035 E010      LDI	R17,0
+    00036 38E5      CPI	R30,0x85
+    00037 07F1      CPC	R31,R17
+    00038 F011      BEQ	0x003B
+    00039 9201      ST	Z+,R0
+    0003A CFFB      RJMP	0x0036
+    0003B 8300      ST	Z,R16
+    0003C E5E4      LDI	R30,0x54
+    0003D E0F0      LDI	R31,0
+    0003E E6A0      LDI	R26,0x60
+    0003F E0B0      LDI	R27,0
+    00040 E010      LDI	R17,0
+    00041 E000      LDI	R16,0
+    00042 BF0B      OUT	0x3B,R16
+    00043 35E4      CPI	R30,0x54
+    00044 07F1      CPC	R31,R17
+    00045 F021      BEQ	0x004A
+    00046 95C8      LPM
+    00047 9631      ADIW	R30,1
+    00048 920D      ST	X+,R0
+    00049 CFF9      RJMP	0x0043
+    0004A 940E 0088 CALL	_main
+_exit:
+    0004C CFFF      RJMP	_exit
+FILE: E:\YWCdesktop\底层行走系统(左右避障，内部8M)\all04.c
+(0001) #include <iom16v.h> 
+(0002) #include <macros.h> 
+(0003) 
+(0004) unsigned char Re_buf[11],counter;//用来存放串口数据的数组，都是字符型
+(0005) unsigned char ucStra[6],ucStrw[6],ucStrAngle[11];
+(0006) unsigned char flag;
+(0007) unsigned char usart_ok;
+(0008) 
+(0009) void delay(int time);
+(0010) //*********发送一个字符************//
+(0011) void put_c(unsigned char c) 
+(0012) {
+(0013) 	while( !(UCSRA & (1<<UDRE)) );
+_put_c:
+  c                    --> R16
+    0004D 9B5D      SBIS	0x0B,5
+    0004E CFFE      RJMP	_put_c
+(0014) 	UDR=c;
+    0004F B90C      OUT	0x0C,R16
+    00050 9508      RET
+_put_s:
+  ptr                  --> R10
+    00051 92AA      ST	-Y,R10
+    00052 92BA      ST	-Y,R11
+    00053 0158      MOVW	R10,R16
+(0015) }
+(0016) //*********发送一串字符************//
+(0017) void put_s(unsigned char *ptr)
+(0018) {
+    00054 C004      RJMP	0x0059
+(0019) 	while (*ptr)
+(0020) 	{
+(0021) 		put_c(*ptr++);
+    00055 01F5      MOVW	R30,R10
+    00056 9101      LD	R16,Z+
+    00057 015F      MOVW	R10,R30
+    00058 DFF4      RCALL	_put_c
+    00059 01F5      MOVW	R30,R10
+    0005A 8020      LD	R2,Z
+    0005B 2022      TST	R2
+    0005C F7C1      BNE	0x0055
+(0022) 	}
+(0023) 	put_c(0x0D);	  //换行
+    0005D E00D      LDI	R16,0xD
+    0005E DFEE      RCALL	_put_c
+    0005F 90B9      LD	R11,Y+
+    00060 90A9      LD	R10,Y+
+    00061 9508      RET
+(0024) 	//put_c(0x0A);  //回车
+(0025) }
+(0026) //*********USART 初始化************//
+(0027) void USART_init(void)
+(0028) {
+(0029)  	UCSRB = 0x00;   //disable while setting baud rate
+_USART_init:
+    00062 2422      CLR	R2
+    00063 B82A      OUT	0x0A,R2
+(0030)     //USART 9600 8, n,1  超级终端等也要设成同样的设置才能通讯
+(0031)     UCSRC = (1<<URSEL) | 0x06;
+    00064 E886      LDI	R24,0x86
+    00065 BD80      OUT	0x20,R24
+(0032)     //异步，8位数据，无奇偶校验，一个停止位，无倍速  
+(0033)     UBRRL= 12;//64、103、(F_CPU/BAUDRATE/8-1)%256;//=12即9600波特率
+    00066 E08C      LDI	R24,0xC
+    00067 B989      OUT	0x09,R24
+(0034)     UBRRH= 0;//3(F_CPU/BAUDRATE/8-1)/256;
+    00068 BC20      OUT	0x20,R2
+(0035)     UCSRA = 0x02;//0x00;正常异步方式
+    00069 E082      LDI	R24,2
+    0006A B98B      OUT	0x0B,R24
+(0036)     UCSRB = 0x98;   //接收中断允许，接收缓冲自动清空，接收允许    
+    0006B E988      LDI	R24,0x98
+    0006C B98A      OUT	0x0A,R24
+    0006D 9508      RET
+(0037) }
+(0038) 
+(0039) //*********PWM功能定时器的初始化************//
+(0040) void timer_init(void) 
+(0041) { 
+(0042)  //SREG=0x80;         //使能全局中断
+(0043) // TIMSK=(1<<OCIE1A); //使能比较匹配中断
+(0044)  TCCR1A=0B10100001; //快速PWM模式，无分频，比较匹配时置零，TOP时置1
+_timer_init:
+    0006E EA81      LDI	R24,0xA1
+    0006F BD8F      OUT	0x2F,R24
+(0045)  TCCR1B=0B00001010;
+    00070 E08A      LDI	R24,0xA
+    00071 BD8E      OUT	0x2E,R24
+    00072 9508      RET
+_delay:
+  i                    --> R20
+  time                 --> R16
+    00073 934A      ST	-Y,R20
+    00074 935A      ST	-Y,R21
+(0046) }
+(0047)  //*********毫秒延时************//
+(0048) void delay(int time)
+(0049) {
+(0050)  int i;
+(0051)  for(;time>0;time--)
+    00075 C00A      RJMP	0x0080
+(0052)   for(i=0;i<1141;i++);
+    00076 2744      CLR	R20
+    00077 2755      CLR	R21
+    00078 5F4F      SUBI	R20,0xFF
+    00079 4F5F      SBCI	R21,0xFF
+    0007A 3745      CPI	R20,0x75
+    0007B E0E4      LDI	R30,4
+    0007C 075E      CPC	R21,R30
+    0007D F3D4      BLT	0x0078
+    0007E 5001      SUBI	R16,1
+    0007F 4010      SBCI	R17,0
+    00080 2422      CLR	R2
+    00081 2433      CLR	R3
+    00082 1620      CP	R2,R16
+    00083 0631      CPC	R3,R17
+    00084 F38C      BLT	0x0076
+    00085 9159      LD	R21,Y+
+    00086 9149      LD	R20,Y+
+    00087 9508      RET
+(0053) }
+(0054) 
+(0055) //////////////////主函数////////////////////////////
+(0056) void main(void) 
+(0057) {  
+(0058)  USART_init();
+_main:
+    00088 DFD9      RCALL	_USART_init
+(0059)  //timer_init();
+(0060) 
+(0061)  SEI(); 
+    00089 9478      BSET	7
+(0062)  DDRA=0XFF;
+    0008A EF8F      LDI	R24,0xFF
+    0008B BB8A      OUT	0x1A,R24
+(0063)  PORTA=0X00; 
+    0008C 2422      CLR	R2
+    0008D BA2B      OUT	0x1B,R2
+(0064)  
+(0065)  delay(100);
+    0008E E604      LDI	R16,0x64
+    0008F E010      LDI	R17,0
+    00090 DFE2      RCALL	_delay
+(0066)  usart_ok=0;
+    00091 2422      CLR	R2
+    00092 9220 0060 STS	usart_ok,R2
+    00094 C016      RJMP	0x00AB
+(0067)  
+(0068)  while(1)
+(0069)  {
+(0070)   if(flag>0)
+    00095 E080      LDI	R24,0
+    00096 9020 0061 LDS	R2,flag
+    00098 1582      CP	R24,R2
+    00099 F470      BCC	0x00A8
+(0071)   {    
+(0072)    put_s(ucStrAngle); 
+    0009A E602      LDI	R16,0x62
+    0009B E010      LDI	R17,0
+    0009C DFB4      RCALL	_put_s
+(0073)    PORTA = ~PORTA;    
+    0009D B22B      IN	R2,0x1B
+    0009E 9420      COM	R2
+    0009F BA2B      OUT	0x1B,R2
+(0074)    
+(0075)    flag = 0;
+    000A0 2422      CLR	R2
+    000A1 9220 0061 STS	flag,R2
+(0076)    usart_ok = 0;
+    000A3 9220 0060 STS	usart_ok,R2
+(0077)    counter = 0;
+    000A5 9220 0079 STS	counter,R2
+(0078)    SEI();   
+    000A7 9478      BSET	7
+(0079)   } 
+(0080)   delay(10); 
+    000A8 E00A      LDI	R16,0xA
+    000A9 E010      LDI	R17,0
+    000AA DFC8      RCALL	_delay
+    000AB CFE9      RJMP	0x0095
+    000AC 9508      RET
+_uart0_rx_isr:
+    000AD 922A      ST	-Y,R2
+    000AE 930A      ST	-Y,R16
+    000AF 931A      ST	-Y,R17
+    000B0 938A      ST	-Y,R24
+    000B1 939A      ST	-Y,R25
+    000B2 93AA      ST	-Y,R26
+    000B3 93EA      ST	-Y,R30
+    000B4 93FA      ST	-Y,R31
+    000B5 B62F      IN	R2,0x3F
+    000B6 922A      ST	-Y,R2
+(0081)   //put_s("fuck it");  
+(0082)  }
+(0083) }
+(0084) /////////////////////中断接收数据//////////////
+(0085) #pragma interrupt_handler uart0_rx_isr:12
+(0086) void uart0_rx_isr(void)
+(0087) { 	 
+(0088) 	 
+(0089) 	Re_buf[counter]=UDR;		
+    000B7 E78A      LDI	R24,0x7A
+    000B8 E090      LDI	R25,0
+    000B9 91E0 0079 LDS	R30,counter
+    000BB 27FF      CLR	R31
+    000BC 0FE8      ADD	R30,R24
+    000BD 1FF9      ADC	R31,R25
+    000BE B02C      IN	R2,0x0C
+    000BF 8220      ST	Z,R2
+(0090) 	if(counter==0&&Re_buf[0]!=0x55) return;      //第0号数据不是帧头	             
+    000C0 9020 0079 LDS	R2,counter
+    000C2 2022      TST	R2
+    000C3 F429      BNE	0x00C9
+    000C4 9180 007A LDS	R24,Re_buf
+    000C6 3585      CPI	R24,0x55
+    000C7 F009      BEQ	0x00C9
+    000C8 C07F      RJMP	0x0148
+(0091) 	
+(0092) 	if(usart_ok == 0)
+    000C9 9020 0060 LDS	R2,usart_ok
+    000CB 2022      TST	R2
+    000CC F009      BEQ	0x00CE
+    000CD C07A      RJMP	0x0148
+(0093) 	{
+(0094) 		counter++; 
+    000CE 9180 0079 LDS	R24,counter
+    000D0 5F8F      SUBI	R24,0xFF
+    000D1 9380 0079 STS	counter,R24
+(0095) 	    if(counter==11)             //接收到11个数据
+    000D3 308B      CPI	R24,0xB
+    000D4 F009      BEQ	0x00D6
+    000D5 C072      RJMP	0x0148
+(0096) 	    {    
+(0097) 	       counter=0;               //重新赋值，准备下一帧数据的接收  		    
+    000D6 2422      CLR	R2
+    000D7 9220 0079 STS	counter,R2
+(0098) 			switch(Re_buf [1])
+    000D9 9100 007B LDS	R16,Re_buf+1
+    000DB 2711      CLR	R17
+    000DC 3501      CPI	R16,0x51
+    000DD E0E0      LDI	R30,0
+    000DE 071E      CPC	R17,R30
+    000DF F049      BEQ	0x00E9
+    000E0 3502      CPI	R16,0x52
+    000E1 E0E0      LDI	R30,0
+    000E2 071E      CPC	R17,R30
+    000E3 F0F1      BEQ	0x0102
+    000E4 3503      CPI	R16,0x53
+    000E5 E0E0      LDI	R30,0
+    000E6 071E      CPC	R17,R30
+    000E7 F199      BEQ	0x011B
+    000E8 C05F      RJMP	0x0148
+(0099) 			{
+(0100) 			case 0x51:
+(0101) 			ucStra[0]=Re_buf[2];
+    000E9 9020 007C LDS	R2,Re_buf+2
+    000EB 9220 0073 STS	ucStra,R2
+(0102) 			ucStra[1]=Re_buf[3];
+    000ED 9020 007D LDS	R2,Re_buf+3
+    000EF 9220 0074 STS	ucStra+1,R2
+(0103) 			ucStra[2]=Re_buf[4];
+    000F1 9020 007E LDS	R2,Re_buf+4
+    000F3 9220 0075 STS	ucStra+2,R2
+(0104) 			ucStra[3]=Re_buf[5];
+    000F5 9020 007F LDS	R2,Re_buf+5
+    000F7 9220 0076 STS	ucStra+3,R2
+(0105) 			ucStra[4]=Re_buf[6];
+    000F9 9020 0080 LDS	R2,Re_buf+6
+    000FB 9220 0077 STS	ucStra+4,R2
+(0106) 			ucStra[5]=Re_buf[7];
+    000FD 9020 0081 LDS	R2,Re_buf+7
+    000FF 9220 0078 STS	ucStra+5,R2
+(0107) 			break;
+    00101 C046      RJMP	0x0148
+(0108) 			case 0x52:	 
+(0109) 			ucStrw[0]=Re_buf[2];
+    00102 9020 007C LDS	R2,Re_buf+2
+    00104 9220 006D STS	ucStrw,R2
+(0110) 			ucStrw[1]=Re_buf[3];
+    00106 9020 007D LDS	R2,Re_buf+3
+    00108 9220 006E STS	ucStrw+1,R2
+(0111) 			ucStrw[2]=Re_buf[4];
+    0010A 9020 007E LDS	R2,Re_buf+4
+    0010C 9220 006F STS	ucStrw+2,R2
+(0112) 			ucStrw[3]=Re_buf[5];
+    0010E 9020 007F LDS	R2,Re_buf+5
+    00110 9220 0070 STS	ucStrw+3,R2
+(0113) 			ucStrw[4]=Re_buf[6];
+    00112 9020 0080 LDS	R2,Re_buf+6
+    00114 9220 0071 STS	ucStrw+4,R2
+(0114) 			ucStrw[5]=Re_buf[7];
+    00116 9020 0081 LDS	R2,Re_buf+7
+    00118 9220 0072 STS	ucStrw+5,R2
+(0115) 			break;
+    0011A C02D      RJMP	0x0148
+(0116) 			case 0x53: 
+(0117) 			ucStrAngle[0]=Re_buf[0];
+    0011B 9020 007A LDS	R2,Re_buf
+    0011D 9220 0062 STS	ucStrAngle,R2
+(0118) 			ucStrAngle[1]=Re_buf[1];
+    0011F 9020 007B LDS	R2,Re_buf+1
+    00121 9220 0063 STS	ucStrAngle+1,R2
+(0119) 			ucStrAngle[2]=Re_buf[2];
+    00123 9020 007C LDS	R2,Re_buf+2
+    00125 9220 0064 STS	ucStrAngle+2,R2
+(0120) 			ucStrAngle[3]=Re_buf[3];
+    00127 9020 007D LDS	R2,Re_buf+3
+    00129 9220 0065 STS	ucStrAngle+3,R2
+(0121) 			ucStrAngle[4]=Re_buf[4];
+    0012B 9020 007E LDS	R2,Re_buf+4
+    0012D 9220 0066 STS	ucStrAngle+4,R2
+(0122) 			ucStrAngle[5]=Re_buf[5];
+    0012F 9020 007F LDS	R2,Re_buf+5
+    00131 9220 0067 STS	ucStrAngle+5,R2
+(0123) 			ucStrAngle[6]=Re_buf[6];
+    00133 9020 0080 LDS	R2,Re_buf+6
+    00135 9220 0068 STS	ucStrAngle+6,R2
+(0124) 			ucStrAngle[7]=Re_buf[7];
+    00137 9020 0081 LDS	R2,Re_buf+7
+    00139 9220 0069 STS	ucStrAngle+7,R2
+(0125) 			ucStrAngle[8]=0X54;
+    0013B E584      LDI	R24,0x54
+    0013C 9380 006A STS	ucStrAngle+8,R24
+(0126) 			ucStrAngle[9]=0X54;
+    0013E 9380 006B STS	ucStrAngle+9,R24
+(0127) 			ucStrAngle[10]=0X54;
+    00140 9380 006C STS	ucStrAngle+10,R24
+(0128) 			flag = 1;
+    00142 E081      LDI	R24,1
+    00143 9380 0061 STS	flag,R24
+(0129) 			usart_ok = 1;
+    00145 9380 0060 STS	usart_ok,R24
+(0130) 			CLI();
+    00147 94F8      BCLR	7
+(0131) 			break;
+(0132) 			} 
+(0133) 	    }
+(0134) 	 }
+FILE: <library>
+    00148 9029      LD	R2,Y+
+    00149 BE2F      OUT	0x3F,R2
+    0014A 91F9      LD	R31,Y+
+    0014B 91E9      LD	R30,Y+
+    0014C 91A9      LD	R26,Y+
+    0014D 9199      LD	R25,Y+
+    0014E 9189      LD	R24,Y+
+    0014F 9119      LD	R17,Y+
+    00150 9109      LD	R16,Y+
+    00151 9029      LD	R2,Y+
+    00152 9518      RETI
